@@ -11,6 +11,9 @@ type Results interface {
 
 	// Adds the given Result to this search's result set.
 	AddResult(Result)
+
+	// Returns the total number of results.
+	Len() int
 }
 
 // Result holds the data for the results you will be returning.

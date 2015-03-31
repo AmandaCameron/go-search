@@ -36,6 +36,10 @@ func Run(searcher Searcher) {
 	r.print()
 }
 
+func (results *alfredResults) Len() int {
+	return len(*results)
+}
+
 func (results *alfredResults) AddResult(r Result) {
 	*results = append(*results, r)
 }
@@ -55,13 +59,23 @@ func (results *alfredResults) print() {
 	var ret alfredResponse
 
 	for _, result := range *results {
-		ret.Items = append(ret.Items, alfredItem{
-			Valid:    result.Valid,
-			UID:      result.Id,
-			Title:    result.Title,
-			Subtitle: result.Subtitle,
-			Arg:      result.Url,
-		})
+		if result.Valid {
+			ret.Items = append(ret.Items, alfredItem{
+				Valid:    result.Valid,
+				UID:      result.ID,
+				Title:    result.Title,
+				Subtitle: result.Subtitle,
+				Arg:      result.URL,
+			})
+		} else {
+			ret.Items = append(ret.Items, alfredItem{
+				Valid:        result.Valid,
+				UID:          result.ID,
+				Title:        result.Title,
+				Subtitle:     result.Subtitle,
+				Autocomplete: result.URL,
+			})
+		}
 	}
 
 	fmt.Println(`<?xml version="1.0" encoding="UTF-8"?>`)

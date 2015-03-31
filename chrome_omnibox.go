@@ -35,6 +35,10 @@ func Run(searcher Searcher) {
 	})
 }
 
+func (results *chromeResults) Len() int {
+	return len(*results)
+}
+
 func (results *chromeResults) AddResult(r Result) {
 	*results = append(*results, r)
 }
