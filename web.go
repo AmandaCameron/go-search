@@ -3,6 +3,8 @@
 package search
 
 import (
+	"errors"
+
 	"github.com/gopherjs/gopherjs/js"
 
 	"github.com/neelance/go-angularjs"
@@ -15,7 +17,8 @@ type angularResults struct {
 
 // Run provides an AngularJS Module named "search-app" with a controller "Search"
 func Run(searcher Searcher) {
-	module := angularjs.NewModule("search-app", nil, func() {})
+	module := angularjs.NewModule("search-app", nil)
+
 	module.NewController("Search", func(scope *angularjs.Scope) {
 		scope.Set("results", []Result{})
 		scope.Set("input", "")
@@ -50,6 +53,10 @@ func Run(searcher Searcher) {
 				}()
 			})
 	})
+}
+
+func (results *angularResults) LoadSettings(settings interface{}) error {
+	return errors.New("Not implementes.")
 }
 
 func (results *angularResults) Len() int {

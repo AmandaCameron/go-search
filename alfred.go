@@ -4,7 +4,11 @@ package search
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
+
+	"gopkg.in/yaml.v2"
 
 	"encoding/xml"
 )
@@ -36,6 +40,22 @@ func Run(searcher Searcher) {
 	r.print()
 }
 
+func (results *alfredResults) LoadSettings(settings interface{}) error {
+	file, err := os.Open("settings.yaml")
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(data, settings)
+}
+
 func (results *alfredResults) Len() int {
 	return len(*results)
 }
@@ -59,6 +79,13 @@ func (results *alfredResults) print() {
 	var ret alfredResponse
 
 	for _, result := range *results {
+		iconPath := result.Icon
+
+		if iconPath[0] != '/' {
+			wd, _ := os.Getwd()
+			iconPath = path.Join(wd, iconPath)
+		}
+
 		if result.Valid {
 			ret.Items = append(ret.Items, alfredItem{
 				Valid:    result.Valid,
@@ -66,6 +93,7 @@ func (results *alfredResults) print() {
 				Title:    result.Title,
 				Subtitle: result.Subtitle,
 				Arg:      result.URL,
+				Icon:     iconPath,
 			})
 		} else {
 			ret.Items = append(ret.Items, alfredItem{
@@ -74,6 +102,7 @@ func (results *alfredResults) print() {
 				Title:        result.Title,
 				Subtitle:     result.Subtitle,
 				Autocomplete: result.URL,
+				Icon:         iconPath,
 			})
 		}
 	}

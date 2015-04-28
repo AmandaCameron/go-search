@@ -12,6 +12,9 @@ type Results interface {
 	// Adds the given Result to this search's result set.
 	AddResult(Result)
 
+	// Loads settings for this handler.
+	LoadSettings(interface{}) error
+
 	// Returns the total number of results.
 	Len() int
 }

@@ -1,11 +1,13 @@
-// +build chrome,js
+//+build chrome,js
 
 package search
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/fabioberger/chrome"
+	"github.com/gopherjs/gopherjs/js"
 )
 
 type chromeResults []Result
@@ -14,25 +16,28 @@ type chromeResults []Result
 func Run(searcher Searcher) {
 	omnibox := chrome.NewChrome().Omnibox
 
-	// omnibox.OnInputStarted(func(results func() {
-	// 	fmt.Println("onInputStarted")
-
-	// 	r := &chromeResults{}
-
-	// 	searcher("", r)
-
-	// 	r.print(results)
-	// })
-
-	omnibox.OnInputChanged(func(inp string, results func([]chrome.SuggestResult)) {
-		fmt.Println("onInputChanged:", inp)
-
+	search := func(inp string, results func([]chrome.SuggestResult)) {
 		r := &chromeResults{}
-
-		searcher(inp, r)
+		searcher("", r)
 
 		r.print(results)
+	}
+
+	omnibox.OnInputChanged(func(inp string, results func([]chrome.SuggestResult)) {
+		go search(inp, results)
 	})
+
+	omnibox.OnInputEntered(func(text, disposition string) {
+		if strings.HasPrefix(text, "command:") {
+			return
+		}
+
+		js.Global.Get("window").Call("open", text)
+	})
+}
+
+func (results *chromeResults) LoadSettings(settings interface{}) error {
+	return errors.New("Not implementes.")
 }
 
 func (results *chromeResults) Len() int {
@@ -48,15 +53,17 @@ func (results *chromeResults) Error(err error) {
 }
 
 func (results *chromeResults) print(suggest func([]chrome.SuggestResult)) {
-	fmt.Println("chromeResults.print: ", results)
-
 	var ret []chrome.SuggestResult
 
 	for _, res := range *results {
-		ret = append(ret, chrome.SuggestResult{
-			Content:     res.Url,
-			Description: res.Title,
-		})
+		r := chrome.SuggestResult{
+			Object: js.MakeWrapper(chrome.SuggestResult{}),
+		}
+
+		r.Set("content", res.URL)
+		r.Set("description", strings.Replace(res.Title, "&", "&amp;", -1))
+
+		ret = append(ret, r)
 	}
 
 	suggest(ret)
