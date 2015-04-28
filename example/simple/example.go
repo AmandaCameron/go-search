@@ -1,7 +1,7 @@
 package main
 
 import (
-	"amanda.camnet/search"
+	"github.com/AmandaCameron/go-search"
 )
 
 func main() {
@@ -9,11 +9,13 @@ func main() {
 		result.AddResult(search.Result{
 			Title:    "Hello World",
 			Subtitle: "Bacon is nom.",
+			URL:      "https://github.com/bacon",
 		})
 
 		result.AddResult(search.Result{
 			Title:    "You inputted: " + inp,
 			Subtitle: "Yay!",
+			URL:      "https://google.com/",
 		})
 	})
 }
