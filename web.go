@@ -7,7 +7,7 @@ import (
 
 	"github.com/gopherjs/gopherjs/js"
 
-	"github.com/neelance/go-angularjs"
+	"github.com/AmandaCameron/go-angularjs"
 )
 
 type angularResults struct {
