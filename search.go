@@ -34,4 +34,6 @@ type Result struct {
 
 	// The result's unique ID
 	ID string
+
+	Selected bool
 }
