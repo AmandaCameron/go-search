@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+
+	"image/png"
 
 	"gopkg.in/yaml.v2"
 
@@ -32,11 +33,35 @@ type alfredResponse struct {
 	XMLName struct{} `xml:"items"`
 }
 
+var alfredCache string
+
 // Run runs your searcher to get the results to be displayed to the user.
 func Run(searcher Searcher) {
-	r := &alfredResults{}
-	searcher(os.Args[1], r)
+	if os.Getenv("alfred_workflow_uid") == "" {
+		println("Expected to be run from Alfred.")
 
+		os.Exit(1)
+	}
+
+	alfredCache = os.Getenv("alfred_workflow_cache")
+
+	r := &alfredResults{}
+
+	if _, err := os.Stat(alfredCache); os.IsNotExist(err) {
+		if err := os.Mkdir(alfredCache, os.FileMode(0777)); err != nil {
+			r.Error(err)
+		}
+	}
+
+	if len(os.Args) != 2 {
+		r.AddResult(Result{
+			Title: "No Input.",
+		})
+
+		r.print()
+	}
+
+	searcher(os.Args[1], r)
 	r.print()
 }
 
@@ -69,8 +94,8 @@ func (results *alfredResults) Error(err error) {
 		{
 			Title:    "Error",
 			Subtitle: err.Error(),
-			Icon:     "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertStopIcon.icns",
-			Valid:    false,
+
+			Valid: false,
 		},
 	}).print()
 }
@@ -79,11 +104,22 @@ func (results *alfredResults) print() {
 	var ret alfredResponse
 
 	for _, result := range *results {
-		iconPath := result.Icon
+		iconPath := ""
+		icon := result.Icon
 
-		if iconPath[0] != '/' {
-			wd, _ := os.Getwd()
-			iconPath = path.Join(wd, iconPath)
+		if icon != nil {
+			hash := hashIcon(icon)
+
+			iconPath = alfredCache + "/icon-" + hash + ".png"
+
+			if _, err := os.Stat(iconPath); os.IsNotExist(err) {
+				file, _ := os.Create(iconPath)
+				defer file.Close()
+
+				if err := png.Encode(file, icon); err != nil {
+					iconPath = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertStopIcon.icns"
+				}
+			}
 		}
 
 		if result.Valid {
@@ -93,7 +129,8 @@ func (results *alfredResults) print() {
 				Title:    result.Title,
 				Subtitle: result.Subtitle,
 				Arg:      result.URL,
-				Icon:     iconPath,
+
+				Icon: iconPath,
 			})
 		} else {
 			ret.Items = append(ret.Items, alfredItem{
@@ -102,7 +139,8 @@ func (results *alfredResults) print() {
 				Title:        result.Title,
 				Subtitle:     result.Subtitle,
 				Autocomplete: result.URL,
-				Icon:         iconPath,
+
+				Icon: iconPath,
 			})
 		}
 	}

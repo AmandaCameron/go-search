@@ -11,17 +11,15 @@ type command struct {
 
 type Commands map[string]command
 
-func (commands Commands) Add(name, title, subtitle string, searcher Searcher) {
-	if subtitle == "" {
-		subtitle = "Command"
-	}
-
+func (commands Commands) Add(name, desc string, searcher Searcher) {
 	commands[name] = command{
 		Result: Result{
-			Title:    title,
-			Subtitle: subtitle,
-			Valid:    false,
+			Title:    name,
+			Subtitle: desc,
+			
 			URL:      name,
+
+			Valid:    false,
 		},
 		searcher: searcher,
 	}

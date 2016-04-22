@@ -4,6 +4,12 @@ package search
 
 import (
 	"encoding/json"
+	"encoding/base64"
+
+	"bytes"
+	
+	"image"
+	"image/png"
 
 	"github.com/gopherjs/gopherjs/js"
 
@@ -11,13 +17,21 @@ import (
 	"github.com/AmandaCameron/go-angularjs/directive"
 )
 
+type angularResult struct {
+	Title, Subtitle string
+	Icon string
+	URL string
+	
+	Selected bool
+}
+
 type angularResults struct {
 	*js.Object `ajs-service:"Search"`
 
 	config string `js:"config"`
 	selected int `js:"selected"`
 
-	results []Result
+	results []angularResult
 }
 
 func (scope *angularResults) New() {
@@ -122,8 +136,12 @@ var searchViewTempl = `
 
 <div ng-repeat="result in results">
   <div class="result" ng-selected="result.Selected">
-    <div class="title">{{result.Title}}</div>
-    <div class="subtitle">{{result.Subtitle}}</div>
+    <img class="icon" ng-src="{{ result.Icon }}">
+
+    <div>
+      <div class="title">{{result.Title}}</div>
+      <div class="subtitle">{{result.Subtitle}}</div> 
+    </div>
   </div>
 </div>`
 
@@ -138,7 +156,16 @@ func (results *angularResults) Len() int {
 }
 
 func (results *angularResults) AddResult(r Result) {
-	results.results = append(results.results, r)
+	results.results = append(results.results, angularResult{
+		Icon: results.encodeIcon(r.Icon),
+		
+		Title: r.Title,
+		Subtitle: r.Subtitle,
+		
+		URL: r.URL,
+		
+		Selected: false,
+	})
 }
 
 func (results *angularResults) Error(err error) {
@@ -160,3 +187,19 @@ func (results *angularResults) updateSelected() {
 		results.results[i] = result
 	}
 }
+
+func (results *angularResults) encodeIcon(icon image.Image) string {
+	if icon == nil {
+		return ""
+	}
+	
+	buff := bytes.NewBuffer([]byte{})
+	
+	err := png.Encode(buff, icon)
+	if err != nil {
+		return ""
+	}
+
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buff.Bytes())
+}
+	

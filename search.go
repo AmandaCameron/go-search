@@ -1,5 +1,9 @@
 package search
 
+import (
+	"image"
+)
+
 // Searcher is what the function passed to Run() should look like.
 type Searcher func(string, Results)
 
@@ -27,13 +31,13 @@ type Result struct {
 	// The stuff to show to the user.
 	Title    string
 	Subtitle string
-	Icon     string
+	
+	// An icon to show to the user, in the form of an image.Image
+	Icon image.Image
 
 	// The result's target URL
 	URL string
 
 	// The result's unique ID
 	ID string
-
-	Selected bool
 }
